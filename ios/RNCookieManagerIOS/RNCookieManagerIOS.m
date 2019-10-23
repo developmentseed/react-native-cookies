@@ -41,13 +41,13 @@ RCT_EXPORT_METHOD(
     NSDate *expiration = [RCTConvert NSDate:props[@"expiration"]];
 
     NSMutableDictionary *cookieProperties = [NSMutableDictionary dictionary];
-    [cookieProperties setObject:name forKey:NSHTTPCookieName];
-    [cookieProperties setObject:value forKey:NSHTTPCookieValue];
-    [cookieProperties setObject:domain forKey:NSHTTPCookieDomain];
-    [cookieProperties setObject:origin forKey:NSHTTPCookieOriginURL];
-    [cookieProperties setObject:path forKey:NSHTTPCookiePath];
-    [cookieProperties setObject:version forKey:NSHTTPCookieVersion];
-    [cookieProperties setObject:expiration forKey:NSHTTPCookieExpires];
+    [cookieProperties setValue:name forKey:NSHTTPCookieName];
+    [cookieProperties setValue:value forKey:NSHTTPCookieValue];
+    [cookieProperties setValue:domain forKey:NSHTTPCookieDomain];
+    [cookieProperties setValue:origin forKey:NSHTTPCookieOriginURL];
+    [cookieProperties setValue:path forKey:NSHTTPCookiePath];
+    [cookieProperties setValue:version forKey:NSHTTPCookieVersion];
+    [cookieProperties setValue:expiration forKey:NSHTTPCookieExpires];
 
     NSHTTPCookie *cookie = [NSHTTPCookie cookieWithProperties:cookieProperties];
 
@@ -92,7 +92,7 @@ RCT_EXPORT_METHOD(getFromResponse:(NSURL *)url
 
         for (int i = 0; i < cookies.count; i++) {
             NSHTTPCookie *cookie = [cookies objectAtIndex:i];
-            [dics setObject:cookie.value forKey:cookie.name];
+            [dics setValue:cookie.value forKey:cookie.name];
             NSLog(@"cookie: name=%@, value=%@", cookie.name, cookie.value);
             [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
         }
@@ -135,7 +135,7 @@ RCT_EXPORT_METHOD(
                     NSMutableDictionary *cookies = [NSMutableDictionary dictionary];
                     for(NSHTTPCookie *currentCookie in allCookies) {
                         if([currentCookie.domain containsString:topLevelDomain]) {
-                            [cookies setObject:currentCookie.value forKey:currentCookie.name];
+                            [cookies setValue:currentCookie.value forKey:currentCookie.name];
                         }
                     }
                     resolve(cookies);
@@ -157,22 +157,17 @@ RCT_EXPORT_METHOD(
     if (useWebKit) {
         if (@available(iOS 11.0, *)) {
             dispatch_async(dispatch_get_main_queue(), ^(){
-                WKHTTPCookieStore *cookieStore = [[WKWebsiteDataStore defaultDataStore] httpCookieStore];
-                [cookieStore getAllCookies:^(NSArray<NSHTTPCookie *> *allCookies) {
-                    for(NSHTTPCookie *currentCookie in allCookies) {
-                        // Uses the NSHTTPCookie directly has no effect, nor deleted the cookie nor thrown an error.
-                        // Create a new cookie with the given values and delete this one do the work.
-                        NSMutableDictionary<NSHTTPCookiePropertyKey, id> *cookieData =  [NSMutableDictionary dictionary];
-                        [cookieData setValue:currentCookie.name forKey:NSHTTPCookieName];
-                        [cookieData setValue:currentCookie.value forKey:NSHTTPCookieValue];
-                        [cookieData setValue:currentCookie.domain forKey:NSHTTPCookieDomain];
-                        [cookieData setValue:currentCookie.path forKey:NSHTTPCookiePath];
-
-                        NSHTTPCookie *newCookie = [NSHTTPCookie cookieWithProperties:cookieData];
-                        [cookieStore deleteCookie:newCookie completionHandler:^{}];
-                    }
-                    resolve(nil);
-                }];
+                // source: https://stackoverflow.com/questions/46465070/how-to-delete-cookies-from-wkhttpcookiestore#answer-47928399
+                NSSet *websiteDataTypes = [NSSet setWithArray:@[WKWebsiteDataTypeCookies]];
+                NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
+                [
+                  [WKWebsiteDataStore defaultDataStore]
+                  removeDataOfTypes:websiteDataTypes 
+                  modifiedSince:dateFrom 
+                  completionHandler:^() {
+                      resolve(nil);
+                  }];
+                ];
             });
         } else {
             reject(@"", NOT_AVAILABLE_ERROR_MESSAGE, nil);
@@ -225,7 +220,7 @@ RCT_EXPORT_METHOD(
     NSMutableDictionary *cookieList = [NSMutableDictionary dictionary];
     for (NSHTTPCookie *cookie in cookies) {
         // NSLog(@"COOKIE: %@", cookie);
-        [cookieList setObject:[self createCookieData:cookie] forKey:cookie.name];
+        [cookieList setValue:[self createCookieData:cookie] forKey:cookie.name];
     }
     return cookieList;
 }
@@ -233,13 +228,13 @@ RCT_EXPORT_METHOD(
 -(NSDictionary *)createCookieData:(NSHTTPCookie *)cookie
 {
     NSMutableDictionary *cookieData = [NSMutableDictionary dictionary];
-    [cookieData setObject:cookie.value forKey:@"value"];
-    [cookieData setObject:cookie.name forKey:@"name"];
-    [cookieData setObject:cookie.domain forKey:@"domain"];
-    [cookieData setObject:cookie.path forKey:@"path"];
+    [cookieData setValue:cookie.value forKey:@"value"];
+    [cookieData setValue:cookie.name forKey:@"name"];
+    [cookieData setValue:cookie.domain forKey:@"domain"];
+    [cookieData setValue:cookie.path forKey:@"path"];
 
     if (cookie.expiresDate) {
-        [cookieData setObject:[self.formatter stringFromDate:cookie.expiresDate] forKey:@"expiresDate"];
+        [cookieData setValue:[self.formatter stringFromDate:cookie.expiresDate] forKey:@"expiresDate"];
     }
 
     return cookieData;
