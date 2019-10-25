@@ -160,14 +160,11 @@ RCT_EXPORT_METHOD(
                 // source: https://stackoverflow.com/questions/46465070/how-to-delete-cookies-from-wkhttpcookiestore#answer-47928399
                 NSSet *websiteDataTypes = [NSSet setWithArray:@[WKWebsiteDataTypeCookies]];
                 NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
-                [
-                  [WKWebsiteDataStore defaultDataStore]
-                  removeDataOfTypes:websiteDataTypes 
-                  modifiedSince:dateFrom 
-                  completionHandler:^() {
-                      resolve(nil);
-                  }];
-                ];
+                [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes
+                                                       modifiedSince:dateFrom
+                                                       completionHandler:^() {
+                                                           resolve(nil);
+                                                       }];
             });
         } else {
             reject(@"", NOT_AVAILABLE_ERROR_MESSAGE, nil);
