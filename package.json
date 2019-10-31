@@ -13,6 +13,7 @@
     "main": "index.js",
     "author": "@joeferraro",
     "license": "MIT",
+    "homepage": "https://github.com/developmentseed/react-native-cookies",
     "dependencies": {
         "invariant": "^2.1.0"
     }
